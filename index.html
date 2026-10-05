@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>単語台帳｜紙の単語帳と重複させないための単語チェック</title>
+<meta name="description" content="紙の単語帳に書く前に、もう持っている単語かどうかを確かめられる無料ツール。登録不要で、データはお使いのブラウザの中だけに保存されます。">
+<meta property="og:title" content="単語台帳">
+<meta property="og:description" content="紙の単語帳に書く前に、もう持っている単語かどうかを確かめられる無料ツール。">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%92%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --page-bg: #d9cc9e;
+    --paper-card: #f5ecd8;
+    --paper-panel: #efe3c8;
+    --ink: #2c2417;
+    --ink-soft: #6e5f45;
+    --ink-faint: #8f7f60;
+    --rule: #cdb98d;
+    --rule-soft: #ddcda3;
+    --warn: #8a5119;
+    --warn-tint: #f1e0c6;
+    --warn-line: #d9b787;
+    --ok: #2c6e63;
+    --ok-tint: #d6e6df;
+    --ok-line: #a9cabf;
+    --danger: #a8341f;
+    --danger-tint: #f2ddd4;
+    --focus: #2c6e63;
+    --shadow-rgb: 44,36,23;
+    --lang: var(--ink);
+    --lang-tint: var(--paper-panel);
+    --lang-line: var(--rule);
+    color-scheme: light;
+  }
+  .hue-0{ --lang:#3d6c4c; --lang-tint:#d9e4da; --lang-line:#b9cabd; }
+  .hue-1{ --lang:#7c2536; --lang-tint:#ecd9dc; --lang-line:#d3b3b9; }
+  .hue-2{ --lang:#34497a; --lang-tint:#d9dfec; --lang-line:#b5c0d8; }
+  .hue-3{ --lang:#8a5a14; --lang-tint:#f0e2c4; --lang-line:#d8bf8c; }
+  .hue-4{ --lang:#1f6670; --lang-tint:#d3e4e3; --lang-line:#a9c9c9; }
+  .hue-5{ --lang:#6a3a78; --lang-tint:#e6d9e8; --lang-line:#c9b3cf; }
+  .hue-6{ --lang:#9a4322; --lang-tint:#f0dccf; --lang-line:#dbb9a4; }
+  .hue-7{ --lang:#4c5560; --lang-tint:#dfe0dc; --lang-line:#bfc3c2; }
+
+  @media (prefers-color-scheme: dark){
+    :root{
+      --page-bg: #14110b;
+      --paper-card: #241e14;
+      --paper-panel: #2c2519;
+      --ink: #ece1c8;
+      --ink-soft: #b7a684;
+      --ink-faint: #9a8a6a;
+      --rule: #4a4029;
+      --rule-soft: #3a3120;
+      --warn: #e0aa62;
+      --warn-tint: #3a2f1a;
+      --warn-line: #5c4726;
+      --ok: #8fbfa4;
+      --ok-tint: #22312b;
+      --ok-line: #3b5247;
+      --danger: #e08268;
+      --danger-tint: #3d2620;
+      --focus: #8fbfa4;
+      --shadow-rgb: 0,0,0;
+      color-scheme: dark;
+    }
+    .hue-0{ --lang:#8fbfa4; --lang-tint:#26332b; --lang-line:#3c5346; }
+    .hue-1{ --lang:#e2909d; --lang-tint:#3a2529; --lang-line:#5a333c; }
+    .hue-2{ --lang:#9db1e0; --lang-tint:#232a3d; --lang-line:#38456a; }
+    .hue-3{ --lang:#dcb169; --lang-tint:#3a2e17; --lang-line:#5c4824; }
+    .hue-4{ --lang:#7fc4cb; --lang-tint:#1d3134; --lang-line:#2f5055; }
+    .hue-5{ --lang:#c99ad6; --lang-tint:#33243a; --lang-line:#51385c; }
+    .hue-6{ --lang:#e39a78; --lang-tint:#3b261c; --lang-line:#5e3b2a; }
+    .hue-7{ --lang:#aab4c0; --lang-tint:#282c31; --lang-line:#424951; }
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; }
+  body{
+    background: var(--page-bg);
+    color: var(--ink);
+    font: 14px/1.6 "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+  }
+  [hidden]{ display:none !important; }
+  button, input, select{ font-family: inherit; }
+
+  .page{ max-width: 640px; margin: 0 auto; padding: 28px 16px 40px; }
+  .card{
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    border-radius: 16px;
+    padding: 26px 22px 24px;
+    box-shadow: 0 1px 2px rgba(var(--shadow-rgb),0.08), 0 10px 28px rgba(var(--shadow-rgb),0.08);
+  }
+  h1{
+    font-family: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    font-weight: 800;
+    font-size: clamp(24px, 6vw, 29px);
+    letter-spacing: 0.04em;
+    line-height: 1.3;
+    margin: 0 0 10px;
+  }
+  .lede{ margin: 0 0 22px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.7; }
+
+  /* --- banners --- */
+  .banner{
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    margin-bottom: 18px;
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  }
+  .banner span{ flex:1; min-width: 180px; }
+  .banner.notice{ background: var(--warn-tint); border: 1px solid var(--warn-line); color: var(--warn); }
+  .banner.error{ background: var(--danger-tint); border: 1px solid var(--danger); color: var(--danger); }
+  .banner.done{ background: var(--ok-tint); border: 1px solid var(--ok-line); color: var(--ok); }
+
+  /* --- welcome --- */
+  .welcome h2, .settings h2{
+    font-family: "Shippori Mincho", "Hiragino Mincho ProN", serif;
+    font-weight: 600;
+    font-size: 16px;
+    margin: 0 0 6px;
+  }
+  .welcome p{ margin: 0 0 14px; color: var(--ink-soft); font-size: 13px; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 14px; }
+  .chip{
+    appearance:none;
+    border: 1px solid var(--rule);
+    background: var(--paper-panel);
+    color: var(--ink-soft);
+    font-weight: 700;
+    font-size: 13.5px;
+    border-radius: 999px;
+    padding: 8px 14px;
+    min-height: 40px;
+    cursor: pointer;
+  }
+  .chip[aria-pressed="true"]{ background: var(--ink); color: var(--paper-card); border-color: var(--ink); }
+  .chip:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+  .welcome .field{ margin-bottom: 16px; }
+
+  /* --- tabs --- */
+  .tabbar{
+    display:flex;
+    gap: 22px;
+    border-bottom: 1px solid var(--rule-soft);
+    margin-bottom: 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabbar::-webkit-scrollbar{ display:none; }
+  .tab{
+    appearance:none; border:none; background:none; cursor:pointer;
+    color: var(--ink-faint);
+    font-weight: 700;
+    font-size: 14.5px;
+    padding: 6px 1px 11px;
+    margin-bottom: -1px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  .tab .count{ font-weight: 500; opacity: .8; font-variant-numeric: tabular-nums; margin-left: 1px; }
+  .tab[aria-selected="true"]{ color: var(--lang); border-bottom-color: var(--lang); }
+  .tab:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* --- add form --- */
+  .add-card{
+    border: 1px solid var(--rule-soft);
+    border-radius: 12px;
+    padding: 18px 18px 16px;
+    margin-bottom: 22px;
+    background: var(--paper-panel);
+  }
+  .add-title{ font-weight: 700; font-size: 14.5px; margin: 0 0 14px; }
+  .field-row{ display:flex; gap:12px; align-items: flex-end; }
+  .field{ flex:1; min-width:0; }
+  .field.field-btn{ flex: 0 0 auto; }
+  .field label{
+    display:block;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-bottom: 5px;
+    letter-spacing: 0.03em;
+  }
+  .field label.sr-label{ visibility: hidden; }
+  .field input, .field select{
+    width:100%;
+    font-size: 16px; /* 16px未満だとiPhoneで入力時に画面が拡大される */
+    color: var(--ink);
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 8px 10px;
+    min-height: 40px;
+  }
+  .field input::placeholder{ color: var(--ink-faint); }
+  .field input:focus, .field select:focus{ outline:none; border-color: var(--focus); box-shadow: 0 0 0 2px var(--ok-tint); }
+  .word-input{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans", sans-serif; }
+
+  .status{
+    border-radius: 8px;
+    padding: 9px 11px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    margin: 12px 0 0;
+  }
+  .status b{ font-weight:700; }
+  .status.dup{ background: var(--warn-tint); border: 1px solid var(--warn-line); color: var(--warn); }
+  .status.fresh{ background: var(--ok-tint); border: 1px solid var(--ok-line); color: var(--ok); }
+  .status ul{ margin: 4px 0 0; padding-left: 1.2em; }
+
+  .btn{
+    font-weight: 700;
+    font-size: 13.5px;
+    border-radius: 8px;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    min-height: 40px;
+    display:inline-flex; align-items:center; justify-content:center; gap: 5px;
+    white-space: nowrap;
+  }
+  .btn:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+  .btn-primary{ background: var(--lang); color: var(--paper-card); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn-ghost{ background:transparent; color: var(--ink-soft); border-color: var(--rule); }
+  .btn-danger{ background: var(--danger); color: var(--paper-card); }
+  .btn-small{ min-height: 34px; padding: 6px 12px; font-size: 12.5px; }
+  .row-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top: 12px; flex-wrap:wrap; }
+
+  /* --- search --- */
+  .search-row{ display:flex; align-items:center; gap: 12px; margin-bottom: 18px; }
+  .search-box{
+    flex:1; min-width: 0;
+    display:flex; align-items:center; gap: 8px;
+    background: var(--paper-panel);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 0 12px;
+  }
+  .search-box:focus-within{ border-color: var(--focus); }
+  .search-box svg{ flex-shrink:0; color: var(--ink-faint); }
+  .search-box input{
+    flex:1; min-width: 0;
+    border:none; background:transparent;
+    padding: 10px 2px;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  .search-box input::placeholder{ color: var(--ink-faint); }
+  .search-box input:focus{ outline:none; }
+  .search-clear{ border:none; background:none; color: var(--ink-faint); font-size: 13px; padding: 8px; cursor:pointer; flex-shrink:0; }
+  .search-count{ font-size: 13px; color: var(--ink-soft); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  /* --- list --- */
+  .section-label{
+    display:flex; align-items:baseline; gap:8px;
+    margin: 20px 0 10px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .section-label:first-child{ margin-top:0; }
+  .dot{ width:9px; height:9px; border-radius:50%; display:inline-block; background: var(--lang); flex-shrink:0; }
+  .section-label .name{ font-family:"Shippori Mincho", "Hiragino Mincho ProN", serif; font-weight:600; font-size:14px; }
+  .section-label .count{ font-size:11.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+  .card-list{ display:flex; flex-direction:column; gap: 10px; }
+  .word-card{
+    border-radius: 10px;
+    padding: 13px 14px 12px 16px;
+    background: var(--paper-panel);
+    border: 1px solid var(--rule-soft);
+    border-left: 4px solid var(--lang);
+  }
+  .top-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .word-main{ min-width:0; }
+  .word-text{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans", sans-serif;
+    font-size: 18px; font-weight: 600; line-height:1.35;
+    overflow-wrap: anywhere;
+  }
+  .meta-row{ display:flex; flex-wrap:wrap; align-items:center; gap: 6px 8px; margin-top: 4px; }
+  .tag{
+    display:inline-block;
+    font-size: 10.5px; font-weight:700; letter-spacing:0.03em;
+    padding: 2px 7px; border-radius: 999px; line-height:1.6;
+  }
+  .pos-tag{ border: 1px solid var(--rule); color: var(--ink-soft); }
+  .lang-tag{ background: var(--lang-tint); color: var(--lang); border:1px solid var(--lang-line); }
+  .translation{ font-size: 14px; color: var(--ink-soft); margin-top: 6px; overflow-wrap: anywhere; }
+  .card-actions{ display:flex; gap:2px; flex-shrink:0; }
+  .text-btn{
+    border:none; background:transparent;
+    color: var(--ink-soft);
+    font-size:12.5px; font-weight:700;
+    padding: 6px 8px; border-radius:6px;
+    cursor:pointer; min-height:36px;
+  }
+  .text-btn:hover{ background: var(--rule-soft); color: var(--ink); }
+  .text-btn:focus-visible{ outline:2px solid var(--focus); outline-offset:1px; }
+  .confirm-row{
+    margin-top:10px; padding-top:10px;
+    border-top: 1px dashed var(--rule);
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  }
+  .confirm-row p{ margin:0; font-size:12.5px; color: var(--danger); flex:1; min-width: 140px; }
+  .edit-form .field-row + .field-row{ margin-top: 10px; }
+
+  .empty-state{
+    text-align:center;
+    padding: 26px 16px;
+    color: var(--ink-soft);
+    font-size: 13.5px; line-height:1.7;
+    border: 1px dashed var(--rule);
+    border-radius: 12px;
+    background: var(--paper-panel);
+  }
+  .more-row{ text-align:center; margin-top: 14px; }
+
+  /* --- settings --- */
+  .settings{ margin-top: 26px; border-top: 1px solid var(--rule-soft); padding-top: 4px; }
+  .settings > summary{
+    cursor:pointer;
+    font-weight:700; font-size: 13.5px;
+    color: var(--ink-soft);
+    padding: 12px 0;
+    list-style-position: inside;
+  }
+  .settings > summary:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+  .settings section{ padding: 14px 0 18px; border-top: 1px dashed var(--rule-soft); }
+  .settings p{ margin: 0 0 12px; font-size: 13px; color: var(--ink-soft); line-height: 1.7; }
+  .settings ol{ margin: 0 0 12px; padding-left: 1.4em; font-size: 13px; color: var(--ink-soft); line-height: 1.8; }
+  .lang-list{ list-style:none; margin: 0 0 12px; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .lang-item{
+    background: var(--paper-panel);
+    border: 1px solid var(--rule-soft);
+    border-radius: 10px;
+    padding: 8px 8px 8px 12px;
+  }
+  .lang-head{ display:flex; align-items:center; gap:8px; }
+  .lang-head .name{ font-weight:700; flex:1; min-width:0; overflow-wrap:anywhere; }
+  .lang-head .count{ font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space:nowrap; }
+  .inline-form{ display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; }
+  .inline-form .field{ flex: 1 1 160px; }
+
+  footer{ text-align:center; font-size: 12px; color: var(--ink-soft); padding: 18px 12px 0; line-height: 1.7; }
+
+  @media (max-width: 480px){
+    .card{ padding: 22px 16px 20px; }
+    .field-row{ flex-direction:column; align-items: stretch; gap: 10px; }
+    .field label.sr-label{ display:none; }
+    .field.field-btn .btn{ width: 100%; }
+    .tabbar{ gap: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <main class="card">
+    <h1>単語台帳</h1>
+    <p class="lede">紙の単語帳に書く前に、もう持っている単語かどうかをここで確かめられます。</p>
+
+    <div id="banner"></div>
+
+    <!-- はじめての人向け：言語を選ぶ -->
+    <section id="welcome" class="welcome" hidden>
+      <h2>勉強している言語を選んでください</h2>
+      <p>いくつでも選べます。あとから追加や変更もできます。</p>
+      <div class="chips" id="presetChips"></div>
+      <div class="field">
+        <label for="welcomeOther">ここにない言語（自由に入力）</label>
+        <input id="welcomeOther" type="text" maxlength="20" placeholder="例: インドネシア語" autocomplete="off">
+      </div>
+      <button type="button" class="btn btn-primary" id="welcomeStart" disabled>この言語ではじめる</button>
+    </section>
+
+    <!-- 本体 -->
+    <div id="app" hidden>
+      <div class="tabbar" id="tabbar" role="tablist" aria-label="言語"></div>
+
+      <form id="addForm" class="add-card" autocomplete="off" novalidate>
+        <p class="add-title" id="addTitle"></p>
+        <div class="field-row">
+          <div class="field">
+            <label for="fWord">単語</label>
+            <input id="fWord" class="word-input" type="text" maxlength="100" autocapitalize="off" autocorrect="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="fPos">品詞</label>
+            <select id="fPos"></select>
+          </div>
+          <div class="field">
+            <label for="fTr">和訳</label>
+            <input id="fTr" type="text" maxlength="100" placeholder="例: こんにちは">
+          </div>
+          <div class="field field-btn">
+            <label class="sr-label" aria-hidden="true">&nbsp;</label>
+            <button type="submit" class="btn btn-primary" id="fSubmit" disabled>追加する</button>
+          </div>
+        </div>
+        <div id="addStatus" role="status" aria-live="polite"></div>
+      </form>
+
+      <div class="search-row">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"/><line x1="11" y1="11" x2="14.5" y2="14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <input id="search" type="search" placeholder="単語・和訳・品詞で検索" aria-label="単語・和訳・品詞で検索" autocomplete="off">
+          <button type="button" class="search-clear" id="searchClear" aria-label="検索をクリア" hidden>✕</button>
+        </div>
+        <span class="search-count" id="searchCount"></span>
+      </div>
+
+      <div id="list"></div>
+    </div>
+
+    <details class="settings" id="settings">
+      <summary>使い方・言語の設定・バックアップ</summary>
+
+      <section>
+        <h2>使い方</h2>
+        <ol>
+          <li>紙の単語帳に書く前に、その単語を「単語」の欄に入力します。</li>
+          <li>すでに台帳にあれば、その場で品詞と和訳が表示されます。書かずに済みます。</li>
+          <li>まだなければ、品詞と和訳を入れて「追加する」を押し、紙の単語帳にも書きます。</li>
+        </ol>
+        <p>登録した単語は、この端末のこのブラウザの中だけに保存されます。会員登録は不要で、入力した内容が外部に送信されることはありません。</p>
+      </section>
+
+      <section>
+        <h2>言語</h2>
+        <ul class="lang-list" id="langList"></ul>
+        <form class="inline-form" id="langAddForm" autocomplete="off">
+          <div class="field">
+            <label for="langAddName">言語を追加</label>
+            <input id="langAddName" type="text" maxlength="20" list="presetList" placeholder="例: スペイン語">
+            <datalist id="presetList"></datalist>
+          </div>
+          <button type="submit" class="btn btn-ghost">追加する</button>
+        </form>
+      </section>
+
+      <section>
+        <h2>バックアップ</h2>
+        <p>ブラウザの履歴やサイトデータを消したり、機種変更をしたりすると台帳も消えます。iPhoneでは、長いあいだ開かないとデータが消えることもあります。ときどきファイルに書き出しておくと安心です。</p>
+        <div class="row-actions" style="justify-content:flex-start;margin-top:0">
+          <button type="button" class="btn btn-ghost" id="exportBtn">ファイルに書き出す</button>
+          <button type="button" class="btn btn-ghost" id="importBtn">ファイルから読み込む</button>
+          <input type="file" id="importFile" accept=".json,application/json" hidden>
+        </div>
+        <p id="backupInfo" style="margin:12px 0 0"></p>
+      </section>
+    </details>
+  </main>
+  <footer>データはこの端末のブラウザ内だけに保存されます。</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var KEY = "tango-daicho:v1";
+  var POS = ["名詞","動詞","形容詞","副詞","代名詞","前置詞","接続詞","助詞","冠詞","数詞","間投詞","熟語・表現","その他"];
+  var PRESETS = [
+    { name:"英語",       locale:"en", ph:"e.g. apple" },
+    { name:"韓国語",     locale:"ko", ph:"예: 안녕하다", hue:0 },
+    { name:"中国語",     locale:"zh", ph:"例: 你好" },
+    { name:"フランス語", locale:"fr", ph:"ex. bonjour", hue:1 },
+    { name:"スペイン語", locale:"es", ph:"ej. hola" },
+    { name:"ドイツ語",   locale:"de", ph:"z. B. hallo" },
+    { name:"イタリア語", locale:"it", ph:"es. ciao" },
+    { name:"ポルトガル語", locale:"pt", ph:"ex. olá" },
+    { name:"タイ語",     locale:"th", ph:"เช่น สวัสดี" },
+    { name:"ベトナム語", locale:"vi", ph:"vd. xin chào" }
+  ];
+  var HUE_COUNT = 8;
+  var PAGE_SIZE = 200;
+  var REMIND_AFTER = 30;
+
+  var store = { version:1, langs:[], words:[], lastExportAt:0, addedSinceExport:0 };
+  var canSave = true;
+  var ui = { tab:"all", query:"", editing:null, confirming:null, langEditing:null, langConfirming:null, shown:PAGE_SIZE, flash:null };
+
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* ---------- 文字の扱い ---------- */
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+    });
+  }
+  function norm(s){
+    s = String(s == null ? "" : s);
+    if (s.normalize) s = s.normalize("NFC");
+    return s.trim().replace(/\s+/g, " ");
+  }
+  // 完全一致の判定用：大文字小文字と前後の空白を無視
+  function keyOf(s){ return norm(s).toLocaleLowerCase(); }
+  // 「表記が近い」の判定用：アクセント記号とアポストロフィの違いも無視
+  function foldOf(s){
+    var k = keyOf(s);
+    if (k.normalize) k = k.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return k.replace(/[\u2019\u2018`\u00b4]/g, "'");
+  }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+  /* ---------- 保存 ---------- */
+  function load(){
+    try {
+      localStorage.setItem(KEY + ":test", "1");
+      localStorage.removeItem(KEY + ":test");
+    } catch (e) { canSave = false; return; }
+    var raw = null;
+    try { raw = localStorage.getItem(KEY); } catch (e) { canSave = false; return; }
+    if (!raw) return;
+    try {
+      var d = JSON.parse(raw);
+      if (d && Array.isArray(d.langs) && Array.isArray(d.words)) {
+        store.langs = d.langs;
+        store.words = d.words;
+        store.lastExportAt = Number(d.lastExportAt) || 0;
+        store.addedSinceExport = Number(d.addedSinceExport) || 0;
+      }
+    } catch (e) {
+      // 壊れたデータは別の場所に退避して、空の台帳ではじめる
+      try { localStorage.setItem(KEY + ":broken", raw); } catch (e2) {}
+    }
+  }
+  function save(){
+    if (!canSave) return false;
+    try {
+      localStorage.setItem(KEY, JSON.stringify(store));
+      return true;
+    } catch (e) {
+      ui.flash = { kind:"error", text:"保存できませんでした。ブラウザの保存容量がいっぱいの可能性があります。バックアップを書き出してから、不要な単語を整理してください。" };
+      return false;
+    }
+  }
+
+  /* ---------- 言語 ---------- */
+  function presetByName(name){
+    var k = keyOf(name);
+    for (var i = 0; i < PRESETS.length; i++) if (keyOf(PRESETS[i].name) === k) return PRESETS[i];
+    return null;
+  }
+  function nextHue(preferred){
+    var used = store.langs.map(function(l){ return l.color; });
+    if (typeof preferred === "number" && used.indexOf(preferred) === -1) return preferred;
+    for (var h = 0; h < HUE_COUNT; h++) if (used.indexOf(h) === -1) return h;
+    return store.langs.length % HUE_COUNT;
+  }
+  function validLocale(s){ return typeof s === "string" && /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(s); }
+  function makeLang(name, locale, color){
+    var p = presetByName(name);
+    var c = (Number.isInteger(color) && color >= 0 && color < HUE_COUNT) ? color : (p ? p.hue : undefined);
+    return {
+      id: uid(),
+      name: norm(name).slice(0, 20),
+      locale: validLocale(locale) ? locale : (p ? p.locale : ""),
+      color: nextHue(c)
+    };
+  }
+  function langById(id){
+    for (var i = 0; i < store.langs.length; i++) if (store.langs[i].id === id) return store.langs[i];
+    return null;
+  }
+  function addLang(name){
+    name = norm(name);
+    if (!name) return null;
+    var k = keyOf(name);
+    for (var i = 0; i < store.langs.length; i++) if (keyOf(store.langs[i].name) === k) return store.langs[i];
+    var l = makeLang(name);
+    store.langs.push(l);
+    return l;
+  }
+  function wordsOf(langId){ return store.words.filter(function(w){ return w.lang === langId; }); }
+  function sortWords(list, locale){
+    return list.slice().sort(function(a, b){
+      try { return a.word.localeCompare(b.word, locale || undefined); }
+      catch (e) { return a.word.localeCompare(b.word); }
+    });
+  }
+
+  /* ---------- 重複チェック ---------- */
+  function findMatches(langId, word, excludeId){
+    var k = keyOf(word), f = foldOf(word);
+    var exact = [], near = [];
+    if (!k) return { exact:exact, near:near };
+    store.words.forEach(function(w){
+      if (w.lang !== langId || w.id === excludeId) return;
+      if (keyOf(w.word) === k) exact.push(w);
+      else if (foldOf(w.word) === f) near.push(w);
+    });
+    return { exact:exact, near:near };
+  }
+  function matchLines(list){
+    return "<ul>" + list.map(function(w){
+      return "<li><b>" + esc(w.word) + "</b>（" + esc(w.pos) + "）「" + esc(w.translation) + "」</li>";
+    }).join("") + "</ul>";
+  }
+  function statusHtml(langId, word, excludeId, showFresh){
+    var w = norm(word);
+    if (!w) return "";
+    var m = findMatches(langId, w, excludeId);
+    if (m.exact.length) {
+      return '<div class="status dup">すでに台帳にあります。' + matchLines(m.exact) +
+             "別の意味として登録する場合は、このまま追加できます。</div>";
+    }
+    if (m.near.length) {
+      return '<div class="status dup">表記が近い単語があります。同じ単語でないか確かめてください。' + matchLines(m.near) + "</div>";
+    }
+    return showFresh ? '<div class="status fresh">「' + esc(w) + "」はまだ台帳にありません。</div>" : "";
+  }
+
+  /* ---------- 画面：バナー ---------- */
+  function renderBanner(){
+    var html = "";
+    if (!canSave) {
+      html += '<div class="banner error"><span>このブラウザでは台帳を保存できません。プライベートブラウズを使っている場合は、通常の画面で開き直してください。</span></div>';
+    }
+    if (ui.flash) {
+      html += '<div class="banner ' + ui.flash.kind + '"><span>' + esc(ui.flash.text) + "</span>" +
+              '<button type="button" class="btn btn-ghost btn-small" data-act="flash-close">閉じる</button></div>';
+    }
+    if (store.addedSinceExport >= REMIND_AFTER) {
+      html += '<div class="banner notice"><span>前回のバックアップから' + store.addedSinceExport + "語追加されています。ファイルに書き出しておくと安心です。</span>" +
+              '<button type="button" class="btn btn-ghost btn-small" data-act="export">ファイルに書き出す</button></div>';
+    }
+    $("banner").innerHTML = html;
+  }
+
+  /* ---------- 画面：はじめての人 ---------- */
+  function renderWelcome(){
+    $("presetChips").innerHTML = PRESETS.map(function(p){
+      return '<button type="button" class="chip" aria-pressed="false" data-name="' + esc(p.name) + '">' + esc(p.name) + "</button>";
+    }).join("");
+    updateWelcomeButton();
+  }
+  function updateWelcomeButton(){
+    var any = document.querySelector('#presetChips .chip[aria-pressed="true"]') || norm($("welcomeOther").value);
+    $("welcomeStart").disabled = !any;
+  }
+
+  /* ---------- 画面：タブとフォーム ---------- */
+  function renderTabs(){
+    var html = store.langs.map(function(l){
+      var sel = ui.tab === l.id;
+      return '<button type="button" role="tab" class="tab hue-' + l.color + '" aria-selected="' + sel + '" data-tab="' + esc(l.id) + '">' +
+             esc(l.name) + ' <span class="count">(' + wordsOf(l.id).length + ")</span></button>";
+    }).join("");
+    if (store.langs.length > 1) {
+      html += '<button type="button" role="tab" class="tab" aria-selected="' + (ui.tab === "all") + '" data-tab="all">すべて <span class="count">(' +
+              store.words.length + ")</span></button>";
+    }
+    $("tabbar").innerHTML = html;
+  }
+  function renderForm(){
+    var form = $("addForm");
+    var l = langById(ui.tab);
+    form.hidden = !l;
+    if (!l) return;
+    form.className = "add-card hue-" + l.color;
+    $("addTitle").textContent = l.name + "の単語を確かめて追加";
+    var p = presetByName(l.name);
+    var input = $("fWord");
+    input.placeholder = p ? p.ph : "単語を入力";
+    input.lang = l.locale || "";
+    updateAddStatus();
+  }
+  function updateAddStatus(){
+    var l = langById(ui.tab);
+    if (!l) return;
+    $("addStatus").innerHTML = statusHtml(l.id, $("fWord").value, null, true);
+    $("fSubmit").disabled = !(norm($("fWord").value) && norm($("fTr").value));
+  }
+
+  /* ---------- 画面：一覧 ---------- */
+  function matchesQuery(w, q){
+    if (!q) return true;
+    return keyOf(w.word).indexOf(q) !== -1 || foldOf(w.word).indexOf(foldOf(q)) !== -1 ||
+           keyOf(w.translation).indexOf(q) !== -1 || keyOf(w.pos).indexOf(q) !== -1;
+  }
+  function posOptions(selected){
+    var list = POS.indexOf(selected) === -1 && selected ? POS.concat([selected]) : POS;
+    return list.map(function(p){
+      return "<option" + (p === selected ? " selected" : "") + ">" + esc(p) + "</option>";
+    }).join("");
+  }
+  function cardHtml(w, showLang){
+    var l = langById(w.lang) || { name:"", color:7, locale:"" };
+    if (ui.editing === w.id) {
+      return '<div class="word-card hue-' + l.color + '" data-id="' + esc(w.id) + '">' +
+        '<form class="edit-form" autocomplete="off" novalidate>' +
+          '<div class="field-row">' +
+            '<div class="field" style="flex:1.4"><label>単語</label><input class="word-input" name="word" maxlength="100" autocapitalize="off" autocorrect="off" spellcheck="false" value="' + esc(w.word) + '"></div>' +
+            '<div class="field"><label>品詞</label><select name="pos">' + posOptions(w.pos) + "</select></div>" +
+          "</div>" +
+          '<div class="field-row"><div class="field"><label>和訳</label><input name="translation" maxlength="100" value="' + esc(w.translation) + '"></div></div>' +
+          '<div class="edit-status" role="status" aria-live="polite"></div>' +
+          '<div class="row-actions">' +
+            '<button type="button" class="btn btn-ghost" data-act="edit-cancel">やめる</button>' +
+            '<button type="submit" class="btn btn-primary">保存する</button>' +
+          "</div>" +
+        "</form></div>";
+    }
+    var confirm = ui.confirming === w.id
+      ? '<div class="confirm-row"><p>「' + esc(w.word) + "」を削除します。</p>" +
+        '<button type="button" class="btn btn-ghost" data-act="del-no">やめる</button>' +
+        '<button type="button" class="btn btn-danger" data-act="del-yes">削除する</button></div>'
+      : "";
+    return '<div class="word-card hue-' + l.color + '" data-id="' + esc(w.id) + '">' +
+      '<div class="top-row"><div class="word-main">' +
+        '<div class="word-text"' + (l.locale ? ' lang="' + esc(l.locale) + '"' : "") + ">" + esc(w.word) + "</div>" +
+        '<div class="meta-row">' +
+          (showLang ? '<span class="tag lang-tag">' + esc(l.name) + "</span>" : "") +
+          '<span class="tag pos-tag">' + esc(w.pos) + "</span>" +
+        "</div>" +
+        '<div class="translation">' + esc(w.translation) + "</div>" +
+      "</div>" +
+      '<div class="card-actions">' +
+        '<button type="button" class="text-btn" data-act="edit">編集</button>' +
+        '<button type="button" class="text-btn" data-act="del">削除</button>' +
+      "</div></div>" + confirm + "</div>";
+  }
+  function renderList(){
+    var q = keyOf(ui.query);
+    var box = $("list");
+    var total = 0, html = "";
+    var budget = ui.shown;
+    var hiddenCount = 0;
+
+    function block(list, showLang){
+      var shown = list.slice(0, Math.max(budget, 0));
+      hiddenCount += list.length - shown.length;
+      budget -= shown.length;
+      return shown.length ? '<div class="card-list">' + shown.map(function(w){ return cardHtml(w, showLang); }).join("") + "</div>" : "";
+    }
+
+    if (ui.tab === "all") {
+      store.langs.forEach(function(l){
+        var all = sortWords(wordsOf(l.id), l.locale);
+        var hit = all.filter(function(w){ return matchesQuery(w, q); });
+        total += hit.length;
+        if (q && !hit.length) return;
+        html += '<div class="section-label hue-' + l.color + '"><span class="dot"></span><span class="name">' + esc(l.name) +
+                '</span><span class="count">' + hit.length + "語</span></div>" + block(hit, false);
+      });
+      if (!store.words.length) html = '<div class="empty-state">台帳はまだ空です。言語のタブを選んで、最初の単語を追加してください。</div>';
+      else if (q && !total) html = '<div class="empty-state">「' + esc(ui.query) + "」に一致する単語は見つかりませんでした。</div>";
+    } else {
+      var l = langById(ui.tab);
+      var all = l ? sortWords(wordsOf(l.id), l.locale) : [];
+      var hit = all.filter(function(w){ return matchesQuery(w, q); });
+      total = hit.length;
+      if (!all.length) html = '<div class="empty-state">' + esc(l ? l.name : "") + "の単語はまだありません。上の欄から最初の1語を追加してください。</div>";
+      else if (q && !hit.length) html = '<div class="empty-state">「' + esc(ui.query) + "」に一致する単語は見つかりませんでした。</div>";
+      else html = block(hit, false);
+    }
+    if (hiddenCount > 0) {
+      html += '<div class="more-row"><button type="button" class="btn btn-ghost" data-act="more">残り' + hiddenCount + "語を表示する</button></div>";
+    }
+    box.innerHTML = html;
+    $("searchCount").textContent = total + "語";
+    $("searchClear").hidden = !ui.query;
+
+    var editForm = box.querySelector(".edit-form");
+    if (editForm) updateEditStatus(editForm);
+  }
+  function updateEditStatus(form){
+    var card = form.closest(".word-card");
+    var w = store.words.filter(function(x){ return x.id === card.dataset.id; })[0];
+    if (!w) return;
+    form.querySelector(".edit-status").innerHTML = statusHtml(w.lang, form.elements.word.value, w.id, false);
+  }
+
+  /* ---------- 画面：設定 ---------- */
+  function renderSettings(){
+    $("presetList").innerHTML = PRESETS.filter(function(p){
+      return !store.langs.some(function(l){ return keyOf(l.name) === keyOf(p.name); });
+    }).map(function(p){ return '<option value="' + esc(p.name) + '">'; }).join("");
+
+    $("langList").innerHTML = store.langs.map(function(l){
+      var n = wordsOf(l.id).length;
+      var body;
+      if (ui.langEditing === l.id) {
+        body = '<form class="inline-form" data-form="rename" autocomplete="off">' +
+               '<div class="field"><label>言語の名前</label><input name="name" maxlength="20" value="' + esc(l.name) + '"></div>' +
+               '<button type="button" class="btn btn-ghost btn-small" data-act="lang-cancel">やめる</button>' +
+               '<button type="submit" class="btn btn-primary btn-small">保存する</button></form>';
+      } else {
+        body = '<div class="lang-head"><span class="dot"></span><span class="name">' + esc(l.name) + '</span><span class="count">' + n + "語</span>" +
+               '<button type="button" class="text-btn" data-act="lang-rename">名前を変える</button>' +
+               '<button type="button" class="text-btn" data-act="lang-del">削除</button></div>';
+        if (ui.langConfirming === l.id) {
+          body += '<div class="confirm-row"><p>「' + esc(l.name) + "」" + (n ? "と、登録済みの" + n + "語" : "") + "を削除します。元に戻せません。</p>" +
+                  '<button type="button" class="btn btn-ghost btn-small" data-act="lang-cancel">やめる</button>' +
+                  '<button type="button" class="btn btn-danger btn-small" data-act="lang-del-yes">削除する</button></div>';
+        }
+      }
+      return '<li class="lang-item hue-' + l.color + '" data-lang="' + esc(l.id) + '">' + body + "</li>";
+    }).join("");
+
+    var info = "登録済み：" + store.words.length + "語。";
+    if (store.lastExportAt) {
+      var d = new Date(store.lastExportAt);
+      info += "前回の書き出し：" + d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日。";
+    } else if (store.words.length) {
+      info += "まだ一度も書き出していません。";
+    }
+    $("backupInfo").textContent = info;
+    $("exportBtn").disabled = !store.words.length;
+  }
+
+  function render(){
+    var hasLang = store.langs.length > 0;
+    if (hasLang && ui.tab !== "all" && !langById(ui.tab)) ui.tab = store.langs[0].id;
+    if (hasLang && ui.tab === "all" && store.langs.length === 1) ui.tab = store.langs[0].id;
+    $("welcome").hidden = hasLang;
+    $("app").hidden = !hasLang;
+    renderBanner();
+    if (hasLang) { renderTabs(); renderForm(); renderList(); }
+    renderSettings();
+  }
+
+  /* ---------- バックアップ ---------- */
+  function exportData(){
+    var now = Date.now();
+    var payload = {
+      app: "tango-daicho",
+      version: 1,
+      exportedAt: new Date(now).toISOString(),
+      langs: store.langs,
+      words: store.words
+    };
+    var d = new Date(now);
+    var pad = function(n){ return (n < 10 ? "0" : "") + n; };
+    var name = "tango-daicho-" + d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + ".json";
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    store.lastExportAt = now;
+    store.addedSinceExport = 0;
+    save();
+    ui.flash = { kind:"done", text:"「" + name + "」に書き出しました。なくさない場所に保管してください。" };
+    render();
+  }
+  function importData(obj){
+    if (!obj || !Array.isArray(obj.langs) || !Array.isArray(obj.words)) throw new Error("format");
+    var map = {}, addedWords = 0, skipped = 0;
+    obj.langs.forEach(function(l){
+      if (!l || typeof l.name !== "string" || !norm(l.name)) return;
+      var k = keyOf(l.name);
+      var ex = store.langs.filter(function(x){ return keyOf(x.name) === k; })[0];
+      if (!ex) { ex = makeLang(l.name, l.locale, l.color); store.langs.push(ex); }
+      map[l.id] = ex.id;
+    });
+    var seen = {};
+    store.words.forEach(function(w){ seen[w.lang + "\n" + keyOf(w.word) + "\n" + keyOf(w.translation)] = true; });
+    obj.words.forEach(function(w){
+      if (!w || typeof w.word !== "string") return;
+      var lang = map[w.lang], word = norm(w.word).slice(0, 100);
+      if (!lang || !word) return;
+      var tr = norm(typeof w.translation === "string" ? w.translation : "").slice(0, 100);
+      var k = lang + "\n" + keyOf(word) + "\n" + keyOf(tr);
+      if (seen[k]) { skipped++; return; }
+      seen[k] = true;
+      store.words.push({
+        id: uid(), lang: lang, word: word,
+        pos: typeof w.pos === "string" && norm(w.pos) ? norm(w.pos).slice(0, 12) : "その他",
+        translation: tr,
+        createdAt: Number(w.createdAt) || Date.now()
+      });
+      addedWords++;
+    });
+    return { added: addedWords, skipped: skipped };
+  }
+
+  /* ---------- 操作 ---------- */
+  $("presetChips").addEventListener("click", function(e){
+    var chip = e.target.closest(".chip");
+    if (!chip) return;
+    chip.setAttribute("aria-pressed", chip.getAttribute("aria-pressed") === "true" ? "false" : "true");
+    updateWelcomeButton();
+  });
+  $("welcomeOther").addEventListener("input", updateWelcomeButton);
+  $("welcomeStart").addEventListener("click", function(){
+    var chips = document.querySelectorAll('#presetChips .chip[aria-pressed="true"]');
+    Array.prototype.forEach.call(chips, function(c){ addLang(c.dataset.name); });
+    addLang($("welcomeOther").value);
+    if (!store.langs.length) return;
+    ui.tab = store.langs[0].id;
+    save(); render();
+    $("fWord").focus();
+  });
+
+  $("tabbar").addEventListener("click", function(e){
+    var tab = e.target.closest(".tab");
+    if (!tab) return;
+    ui.tab = tab.dataset.tab;
+    ui.editing = null; ui.confirming = null; ui.shown = PAGE_SIZE;
+    render();
+  });
+
+  $("fWord").addEventListener("input", updateAddStatus);
+  $("fTr").addEventListener("input", updateAddStatus);
+  $("addForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var l = langById(ui.tab);
+    var word = norm($("fWord").value), tr = norm($("fTr").value);
+    if (!l || !word || !tr) return;
+    store.words.push({ id:uid(), lang:l.id, word:word, pos:$("fPos").value, translation:tr, createdAt:Date.now() });
+    store.addedSinceExport += 1;
+    var ok = save();
+    $("fWord").value = ""; $("fTr").value = ""; $("fPos").selectedIndex = 0;
+    render();
+    if (ok) $("addStatus").innerHTML = '<div class="status fresh">「' + esc(word) + "」を台帳に追加しました。</div>";
+    $("fWord").focus();
+  });
+
+  $("search").addEventListener("input", function(){
+    ui.query = this.value; ui.shown = PAGE_SIZE;
+    renderList();
+  });
+  $("searchClear").addEventListener("click", function(){
+    $("search").value = ""; ui.query = "";
+    renderList(); $("search").focus();
+  });
+
+  $("list").addEventListener("click", function(e){
+    var btn = e.target.closest("[data-act]");
+    if (!btn) return;
+    var act = btn.dataset.act;
+    if (act === "more") { ui.shown += PAGE_SIZE; renderList(); return; }
+    var card = btn.closest(".word-card");
+    var id = card && card.dataset.id;
+    if (act === "edit") { ui.editing = id; ui.confirming = null; renderList(); var i = $("list").querySelector(".edit-form input"); if (i) i.focus(); }
+    else if (act === "edit-cancel") { ui.editing = null; renderList(); }
+    else if (act === "del") { ui.confirming = id; ui.editing = null; renderList(); }
+    else if (act === "del-no") { ui.confirming = null; renderList(); }
+    else if (act === "del-yes") {
+      store.words = store.words.filter(function(w){ return w.id !== id; });
+      ui.confirming = null;
+      save(); render();
+    }
+  });
+  $("list").addEventListener("input", function(e){
+    var form = e.target.closest(".edit-form");
+    if (form && e.target.name === "word") updateEditStatus(form);
+  });
+  $("list").addEventListener("submit", function(e){
+    var form = e.target.closest(".edit-form");
+    if (!form) return;
+    e.preventDefault();
+    var id = form.closest(".word-card").dataset.id;
+    var word = norm(form.elements.word.value), tr = norm(form.elements.translation.value);
+    if (!word || !tr) return;
+    store.words.forEach(function(w){
+      if (w.id === id) { w.word = word; w.pos = form.elements.pos.value; w.translation = tr; }
+    });
+    ui.editing = null;
+    save(); render();
+  });
+
+  $("banner").addEventListener("click", function(e){
+    var btn = e.target.closest("[data-act]");
+    if (!btn) return;
+    if (btn.dataset.act === "flash-close") { ui.flash = null; renderBanner(); }
+    if (btn.dataset.act === "export") exportData();
+  });
+
+  $("langList").addEventListener("click", function(e){
+    var btn = e.target.closest("[data-act]");
+    if (!btn) return;
+    var id = btn.closest(".lang-item").dataset.lang;
+    var act = btn.dataset.act;
+    if (act === "lang-rename") { ui.langEditing = id; ui.langConfirming = null; renderSettings(); var i = $("langList").querySelector('form input'); if (i) { i.focus(); i.select(); } }
+    else if (act === "lang-del") { ui.langConfirming = id; ui.langEditing = null; renderSettings(); }
+    else if (act === "lang-cancel") { ui.langEditing = null; ui.langConfirming = null; renderSettings(); }
+    else if (act === "lang-del-yes") {
+      store.langs = store.langs.filter(function(l){ return l.id !== id; });
+      store.words = store.words.filter(function(w){ return w.lang !== id; });
+      ui.langConfirming = null;
+      if (ui.tab === id) ui.tab = store.langs.length ? store.langs[0].id : "all";
+      save(); render();
+    }
+  });
+  $("langList").addEventListener("submit", function(e){
+    e.preventDefault();
+    var form = e.target;
+    var id = form.closest(".lang-item").dataset.lang;
+    var name = norm(form.elements.name.value).slice(0, 20);
+    if (!name) return;
+    var clash = store.langs.some(function(l){ return l.id !== id && keyOf(l.name) === keyOf(name); });
+    if (clash) { ui.flash = { kind:"error", text:"「" + name + "」という言語はすでにあります。別の名前にしてください。" }; renderBanner(); return; }
+    var l = langById(id);
+    if (l) {
+      l.name = name;
+      var p = presetByName(name);
+      if (p) l.locale = p.locale;
+    }
+    ui.langEditing = null;
+    save(); render();
+  });
+  $("langAddForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var before = store.langs.length;
+    var l = addLang($("langAddName").value);
+    if (!l) return;
+    $("langAddName").value = "";
+    if (store.langs.length > before) ui.tab = l.id;
+    save(); render();
+  });
+
+  $("exportBtn").addEventListener("click", exportData);
+  $("importBtn").addEventListener("click", function(){ $("importFile").click(); });
+  $("importFile").addEventListener("change", function(){
+    var file = this.files && this.files[0];
+    this.value = "";
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try {
+        var result = importData(JSON.parse(String(reader.result)));
+        save();
+        ui.flash = { kind:"done", text: result.added + "語を読み込みました。" + (result.skipped ? "すでに台帳にある" + result.skipped + "語は飛ばしました。" : "") };
+      } catch (err) {
+        ui.flash = { kind:"error", text:"このファイルは読み込めませんでした。単語台帳から書き出したファイル（.json）を選んでください。" };
+      }
+      render();
+      window.scrollTo({ top:0, behavior:"smooth" });
+    };
+    reader.onerror = function(){
+      ui.flash = { kind:"error", text:"ファイルを開けませんでした。もう一度選び直してください。" };
+      render();
+    };
+    reader.readAsText(file);
+  });
+
+  /* ---------- はじめに ---------- */
+  $("fPos").innerHTML = posOptions(POS[0]);
+  load();
+  if (store.langs.length) ui.tab = store.langs.length === 1 ? store.langs[0].id : store.langs[0].id;
+  renderWelcome();
+  render();
+  if (!store.langs.length) $("settings").open = false;
+})();
+</script>
+</body>
+</html>
